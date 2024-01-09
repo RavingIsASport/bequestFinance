@@ -1,4 +1,4 @@
-const { Schema, model } = require("mongoose");
+const { Schema, model, Types } = require("mongoose");
 const bcrypt = require("bcrypt");
 
 const userSchema = new Schema({
@@ -15,6 +15,12 @@ const userSchema = new Schema({
     required: "Password is Required",
     validate: [({ length }) => length >= 6, "Password should be longer."],
   },
+  notes: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "userData",
+    },
+  ],
 });
 
 // has new password or modified password
