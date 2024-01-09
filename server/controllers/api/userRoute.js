@@ -19,8 +19,20 @@ router.get("/api/user/me", withAuth, async (req, res) => {
     id: _id,
     firstName,
     email,
-    notes,
   });
+});
+
+// get user notes
+router.get("/api/user/notes", withAuth, async (req, res) => {
+  let { firstName, notes } = await User.findById(req.user.id).populate("notes");
+  try {
+    res.status(200).json({
+      firstName,
+      notes,
+    });
+  } catch {
+    throw new Error("No user or notes");
+  }
 });
 
 // create new user
@@ -72,16 +84,46 @@ router.post("/api/user/login", async ({ body }, res) => {
 });
 
 // user data routes
-// create user data route
-router.post("/api/newdata", async ({ body }, res) => {
+// create user note
+router.post("/api/newdata", withAuth, async ({ body, user }, res) => {
   const { title, main } = body;
   const newdata = await UserData.create({ title, main });
   await User.findOneAndUpdate(
-    {},
+    { _id: user.id },
     { $push: { notes: newdata._id } },
     { new: true }
   );
   res.send(newdata);
 });
 
+// update user notes
+router.put("/api/user/notes/:id", withAuth, async (req, res) => {
+  let user = await User.findById(req.user.id).populate("notes");
+  const updatedNote = await UserData.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+
+    { new: true }
+  );
+  try {
+    res.status(200).json({
+      user,
+      updatedNote,
+    });
+  } catch {
+    throw new Error("No, user or notes");
+  }
+});
+
+// delete user note
+router.delete("/api/user/notes/:id", withAuth, async (req, res) => {
+  try {
+    await UserData.findByIdAndDelete(req.params.id);
+    res.status(200).json({
+      message: "note removed",
+    });
+  } catch {
+    throw new Error("No user or notes");
+  }
+});
 module.exports = router;
